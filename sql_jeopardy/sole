@@ -1,0 +1,22 @@
+WITH
+   TreasuresInEachRealm (realm, treasure) AS (
+      SELECT realm, treasure
+      FROM Loot
+      GROUP BY realm, treasure
+      ORDER BY realm, treasure
+   ),
+
+   UniqueTreasure (treasure, count) AS (
+      SELECT treasure, COUNT(treasure) AS count
+      FROM TreasuresInEachRealm
+      GROUP BY treasure
+      HAVING count = 1
+      ORDER BY treasure
+   )
+
+SELECT DISTINCT L.realm, U.treasure, T.sql
+FROM UniqueTreasure U, Loot L, Treasure T
+WHERE U.treasure = L.treasure
+AND U.treasure = T.treasure
+ORDER BY realm, sql desc, treasure;
+
