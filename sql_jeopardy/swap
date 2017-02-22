@@ -1,0 +1,29 @@
+WITH
+   NumberSwappedAvatars (login, #swapped_avatars) AS (
+      SELECT P.login, COUNT(*) AS #swapped_avatars
+      FROM Player P, Avatar A
+      WHERE P.login = A.login
+      AND P.gender != A.gender
+      GROUP BY P.login
+      ORDER BY P.login
+   ),
+
+   NumberAvatars (login, #avatars) AS (
+      SELECT login, COUNT(*) AS #avatars
+      FROM Avatar
+      GROUP BY login
+      ORDER BY login
+   ),
+
+   PlayersWithSwappedAvatars (login, name, gender, #avatars, #swapped_avatars) AS (
+      SELECT P.login, P.name, P.gender, NA.#avatars, NS.#swapped_avatars
+      FROM Player P, NumberAvatars NA, NumberSwappedAvatars NS
+      WHERE P.login = NA.login
+      AND P.login = NS.login
+      ORDER BY P.login
+   )
+
+SELECT login, name, gender, #avatars
+FROM PlayersWithSwappedAvatars
+WHERE #avatars = #swapped_avatars
+ORDER BY login;
