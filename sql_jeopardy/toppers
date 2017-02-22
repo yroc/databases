@@ -1,0 +1,39 @@
+WITH
+   Winners (treasure, realm, name, gender, race) AS (
+      SELECT L.treasure, L.realm, V.name, A.gender, A.race
+      FROM Loot L, Visit V, Avatar A
+      WHERE L.login = V.login
+      AND L.realm = V.realm
+      AND L.day = V.day
+      AND A.login = L.login
+      AND V.name = A.name
+      ORDER BY realm, name
+   ),
+
+   WinnersTreasureValue (realm, gender, name, race, sql) AS (
+      SELECT W.realm, W.gender, W.name, W.race, T.sql
+      FROM Winners W, Treasure T
+      WHERE W.treasure = T.treasure
+      ORDER BY realm, gender
+   ),
+
+   WinnersByRealmAndGender (realm, gender, race, total) AS (
+      SELECT realm, gender, race, SUM(sql) AS total
+      FROM WinnersTreasureValue
+      GROUP BY realm, gender, race
+      ORDER BY realm, gender, race
+   ),
+
+   GetMax (realm, gender, total) AS (
+      SELECT realm, gender, MAX(total) AS total
+      FROM WinnersByRealmAndGender
+      GROUP BY realm, gender
+      ORDER BY realm, gender
+   )
+
+SELECT G.realm, G.gender, W.race, G.total
+FROM WinnersByRealmAndGender W, GetMax G
+WHERE G.realm = W.realm
+AND G.gender = W.gender
+AND G.total = W.total
+ORDER BY G.realm, G.gender;
