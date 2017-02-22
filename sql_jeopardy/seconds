@@ -1,0 +1,37 @@
+WITH
+   SecondsPerQuest (login, seconds) AS (
+      SELECT A.login,
+             (HOUR(succeeded) - 18) * 3600 + MINUTE(succeeded) * 60 + SECOND(succeeded) AS seconds
+      FROM Actor A, Quest Q
+      WHERE A.realm = Q.realm
+      AND A.day = Q.day
+      AND A.theme = Q.theme
+      ORDER BY A.login
+   ),
+
+   TotalSecondsExcludingNulls (login, seconds) AS (
+      SELECT login, SUM(seconds) AS seconds
+      FROM SecondsPerQuest
+      GROUP BY login
+      ORDER BY login
+   ),
+
+   NumberOfNulls (login, #nulls) AS (
+      SELECT S.login, COUNT(*) AS #nulls
+      FROM SecondsPerQuest S
+      WHERE S.seconds IS NULL
+      GROUP BY S.login
+      ORDER BY S.login
+   ),
+
+   LoginSecondsNulls (login, name, address, seconds, #nulls) AS (
+      SELECT T.login, P.name, P.address, T.seconds, N.#nulls
+      FROM TotalSecondsExcludingNulls T, NumberOfNulls N, Player P
+      WHERE T.login = N.login
+      AND P.login = T.login
+      ORDER BY T.login
+   )
+
+SELECT L.login, L.name, L.address, L.seconds + 6 * 3600 * L.#nulls AS seconds
+FROM LoginSecondsNulls L
+ORDER BY L.login;
